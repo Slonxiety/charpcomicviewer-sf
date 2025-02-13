@@ -60,5 +60,17 @@ namespace CSharpComicViewer.WPF
 		{
 			this.Close();
 		}
-	}
+
+        /// <summary>
+        /// Handles the Click event of the Close control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="System.Windows.RoutedEventArgs"/> instance containing the event data.</param>
+
+        private void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+			if (e.Key == System.Windows.Input.Key.Space)
+				this.Close();
+        }
+    }
 }

@@ -38,7 +38,16 @@ namespace CSharpComicLoader
 			string returnValue = "";
 
 			string directory = Directory.GetParent(currentFilePath).FullName;
-			List<string> supportedFiles = Directory.GetFiles(directory).Where(file => Utils.ValidateArchiveFileExtension(file)).ToList();
+
+            var attr = System.IO.File.GetAttributes(currentFilePath);
+            List<string> supportedFiles;
+
+            if (attr.HasFlag(System.IO.FileAttributes.Directory))
+				supportedFiles = Directory.GetDirectories(directory).ToList();
+			else if (Utils.ValidateImageFileExtension(currentFilePath))
+				supportedFiles = Directory.GetFiles(directory).Where(file => Utils.ValidateImageFileExtension(file)).ToList();
+			else
+				supportedFiles = Directory.GetFiles(directory).Where(file => Utils.ValidateArchiveFileExtension(file)).ToList();
 			supportedFiles.Sort();
 
 			int currentFileIndex = supportedFiles.IndexOf(currentFilePath);
@@ -47,6 +56,7 @@ namespace CSharpComicLoader
 			{
 				returnValue = supportedFiles[currentFileIndex + 1];
 			}
+
 
 			return returnValue;
 		}
@@ -61,7 +71,18 @@ namespace CSharpComicLoader
 			string returnValue = "";
 
 			string directory = Directory.GetParent(currentFilePath).FullName;
-			List<string> supportedFiles = Directory.GetFiles(directory).Where(file => Utils.ValidateArchiveFileExtension(file)).ToList();
+
+            var attr = System.IO.File.GetAttributes(currentFilePath);
+			List<string> supportedFiles;
+
+            if (attr.HasFlag(System.IO.FileAttributes.Directory))
+                supportedFiles = Directory.GetDirectories(directory).ToList();
+			else if (Utils.ValidateImageFileExtension(currentFilePath))
+                supportedFiles = Directory.GetFiles(directory).Where(file => Utils.ValidateImageFileExtension(file)).ToList();
+            else
+				supportedFiles = Directory.GetFiles(directory).Where(file => Utils.ValidateArchiveFileExtension(file)).ToList();
+			
+			
 			supportedFiles.Sort();
 
 			int currentFileIndex = supportedFiles.IndexOf(currentFilePath);

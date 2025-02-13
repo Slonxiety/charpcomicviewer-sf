@@ -23,6 +23,7 @@
             Height="486"
    Width="641" 
         Title="Information Text" 
+        KeyDown="OnKeyDown"
         Icon="/csharp-comicviewer;component/icon.ico" ResizeMode="NoResize" AllowsTransparency="False" WindowStartupLocation="CenterScreen" WindowStyle="ToolWindow" Name="InformationTextWindow" Topmost="False">
 
 	<Grid DataContext="{Binding ElementName=InformationTextWindow, Path=.}" Focusable="True" IsManipulationEnabled="True" ShowGridLines="False">

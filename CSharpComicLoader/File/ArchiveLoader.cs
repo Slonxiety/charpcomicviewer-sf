@@ -93,7 +93,7 @@ namespace CSharpComicLoader.File
 
 			foreach (String file in files)
 			{
-				if (!System.IO.File.Exists(file))
+				if (!System.IO.File.Exists(file) && !Directory.Exists(file))
 				{
 					returnValue.Error = "One or more archives where not found";
 					return returnValue;
@@ -105,70 +105,95 @@ namespace CSharpComicLoader.File
 				TotalFiles = files.Length;
 				foreach (string file in files)
 				{
-					//open archive
-					extractor = new SevenZipExtractor(file);
-					string[] fileNames = extractor.ArchiveFileNames.ToArray();
-					Array.Sort(fileNames);
-
-					//create ComicFiles for every single archive
-					for (int i = 0; i < extractor.FilesCount; i++)
+					FileAttributes attr = System.IO.File.GetAttributes(file);
+					
+					// Folder
+					if (attr.HasFlag(System.IO.FileAttributes.Directory))
 					{
-						for (int x = 0; x < Enum.GetNames(typeof(SupportedImages)).Length; x++)
+                        string[] allFiles = Directory.GetFiles(file, "*.*", SearchOption.AllDirectories);
+                        foreach (string fileInFolder in allFiles)
 						{
-							//if it is an image add it to array list
-							if (Utils.ValidateImageFileExtension(fileNames[i]))
+							if (Utils.ValidateImageFileExtension(fileInFolder))
 							{
-								ms = new MemoryStream();
-								extractor.ExtractFile(fileNames[i], ms);
-								ms.Position = 0;
-								try
-								{
-									comicFile.Add(ms.ToArray());
-								}
-								catch (Exception)
-								{
-									ms.Close();
-									returnValue.Error = "One or more files are corrupted, and where skipped";
-									return returnValue;
-								}
-
-								ms.Close();
-								nextFile = true;
+								comicFile.Add(System.IO.File.ReadAllBytes(fileInFolder));
 							}
-
-							//if it is a txt file set it as InfoTxt
-							else if (Utils.ValidateTextFileExtension(fileNames[i]))
+							else if (Utils.ValidateTextFileExtension(fileInFolder))
 							{
-								ms = new MemoryStream();
-								extractor.ExtractFile(fileNames[i], ms);
-								ms.Position = 0;
-								try
-								{
-									StreamReader sr = new StreamReader(ms);
+								using (StreamReader sr = new StreamReader(fileInFolder))
 									infoTxt = sr.ReadToEnd();
-								}
-								catch (Exception)
-								{
-									ms.Close();
-									returnValue.Error = "One or more files are corrupted, and where skipped";
-									return returnValue;
-								}
-
-								ms.Close();
-								nextFile = true;
-							}
-
-
-							if (nextFile)
-							{
-								nextFile = false;
-								x = Enum.GetNames(typeof(SupportedImages)).Length;
 							}
 						}
 					}
 
-					//unlock files again
-					extractor.Dispose();
+					// Zip
+					else if (attr.HasFlag(System.IO.FileAttributes.Archive))
+                    {
+						//open archive
+                        extractor = new SevenZipExtractor(file);
+                        string[] fileNames = extractor.ArchiveFileNames.ToArray();
+                        Array.Sort(fileNames);
+
+                        //create ComicFiles for every single archive
+                        for (int i = 0; i < extractor.FilesCount; i++)
+                        {
+                            // Try three times on the same file(?
+                            for (int x = 0; x < Enum.GetNames(typeof(SupportedImages)).Length; x++)
+                            {
+                                //if it is an image add it to array list
+                                if (Utils.ValidateImageFileExtension(fileNames[i]))
+                                {
+                                    ms = new MemoryStream();
+                                    extractor.ExtractFile(fileNames[i], ms);
+                                    ms.Position = 0;
+                                    try
+                                    {
+                                        comicFile.Add(ms.ToArray());
+                                    }
+                                    catch (Exception)
+                                    {
+                                        ms.Close();
+                                        returnValue.Error = "One or more files are corrupted, and where skipped";
+                                        return returnValue;
+                                    }
+
+                                    ms.Close();
+                                    nextFile = true;
+                                }
+
+                                //if it is a txt file set it as InfoTxt
+                                else if (Utils.ValidateTextFileExtension(fileNames[i]))
+                                {
+                                    ms = new MemoryStream();
+                                    extractor.ExtractFile(fileNames[i], ms);
+                                    ms.Position = 0;
+                                    try
+                                    {
+                                        StreamReader sr = new StreamReader(ms);
+                                        infoTxt = sr.ReadToEnd();
+                                    }
+                                    catch (Exception)
+                                    {
+                                        ms.Close();
+                                        returnValue.Error = "One or more files are corrupted, and where skipped";
+                                        return returnValue;
+                                    }
+
+                                    ms.Close();
+                                    nextFile = true;
+                                }
+
+
+                                if (nextFile)
+                                {
+                                    nextFile = false;
+                                    x = Enum.GetNames(typeof(SupportedImages)).Length;
+                                }
+                            }
+                        }
+
+                        //unlock files again
+                        extractor.Dispose();
+                    }
 
 					//Add a ComicFile
 					if (comicFile.Count > 0)

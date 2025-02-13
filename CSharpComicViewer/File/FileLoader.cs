@@ -86,7 +86,7 @@ namespace CSharpComicViewer
 				SupportedImages empty;
 				if (Enum.TryParse<SupportedImages>(extension, true, out empty))
 				{
-					this.PageType = PageType.Image;
+					this.PageType = PageType.Image; 
 					break;
 				}
 				else if (this.PageType == PageType.Image)
@@ -94,8 +94,8 @@ namespace CSharpComicViewer
 					this.Error = "Please select only archives or only images.";
 				}
 			}
-
-			if (string.IsNullOrEmpty(this.Error))
+            // If one image in files, use ImageLoader. Else, ArchiveLoader.
+            if (string.IsNullOrEmpty(this.Error))
 			{
 				if (PageType == PageType.Archive)
 				{

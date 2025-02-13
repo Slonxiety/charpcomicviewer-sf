@@ -291,7 +291,7 @@ namespace CSharpComicViewer.WPF
             {
                 foreach (string file in Configuration.Resume.Files)
                 {
-                    if (!File.Exists(file))
+                    if (!File.Exists(file) && !Directory.Exists(file))
                     {
                         ResumeFile_MenuBar.IsEnabled = false;
                         ResumeFile_RightClick.IsEnabled = false;
@@ -946,6 +946,16 @@ namespace CSharpComicViewer.WPF
         }
 
         /// <summary>
+        /// Handles the Click event of the Load Folder control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="System.Windows.RoutedEventArgs"/> instance containing the event data.</param>
+        private void Load_Folder_Click(object sender, RoutedEventArgs e)
+        {
+            LoadAndDisplayComic(true, true);
+        }
+
+        /// <summary>
         /// Handles the Click event of the NextPage control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
@@ -1246,7 +1256,8 @@ namespace CSharpComicViewer.WPF
         /// Load archive(s) and display first page
         /// </summary>
         /// <param name="askOpenFileDialog">Should file dialog be used?</param>
-        public void LoadAndDisplayComic(bool askOpenFileDialog)
+        /// <param name="select_folder">Use file dialog or folder dialog</param>
+        public void LoadAndDisplayComic(bool askOpenFileDialog, bool select_folder = false)
         {
             try
             {
@@ -1254,23 +1265,46 @@ namespace CSharpComicViewer.WPF
 
                 if (askOpenFileDialog)
                 {
-                    OpenFileDialog openFileDialog = new OpenFileDialog();
-                    if (_comicBook != null)
+                    if (select_folder)
                     {
-                        Bookmark bookmark = _comicBook.GetBookmark();
-                        openFileDialog.InitialDirectory = bookmark.GetCurrentFileDirectoryLocation();
+                        var openFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
+                        if (_comicBook != null)
+                        {
+                            Bookmark bookmark = _comicBook.GetBookmark();
+                            openFolderDialog.RootFolder = Environment.SpecialFolder.Desktop;
+                            openFolderDialog.SelectedPath = bookmark.GetCurrentFileDirectoryLocation();
+                        }
+                        
+                        if (openFolderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                        {
+                            files = new string[] { openFolderDialog.SelectedPath };
+                        }
+                        else
+                        {
+                            throw new Exception(); //dunno why but follow tradition
+                        }
+                        
                     }
-
-                    openFileDialog.Filter = Utils.FileLoaderFilter;
-                    openFileDialog.Multiselect = true;
-                    openFileDialog.ShowDialog();
-
-                    if (openFileDialog.FileNames.Length <= 0)
+                    else
                     {
-                        throw new Exception();
-                    }
+                        OpenFileDialog openFileDialog = new OpenFileDialog();
+                        if (_comicBook != null)
+                        {
+                            Bookmark bookmark = _comicBook.GetBookmark();
+                            openFileDialog.InitialDirectory = bookmark.GetCurrentFileDirectoryLocation();
+                        }
 
-                    files = openFileDialog.FileNames;
+                        openFileDialog.Filter = Utils.FileLoaderFilter;
+                        openFileDialog.Multiselect = true;
+                        openFileDialog.ShowDialog();
+
+                        if (openFileDialog.FileNames.Length <= 0)
+                        {
+                            throw new Exception();
+                        }
+
+                        files = openFileDialog.FileNames;
+                    }
                 }
                 else
                 {
@@ -1279,7 +1313,7 @@ namespace CSharpComicViewer.WPF
 
                 foreach (string file in files)
                 {
-                    if (!File.Exists(file))
+                    if (!File.Exists(file) && !Directory.Exists(file))
                     {
                         ShowMessage("One or more archives not found");
                         throw new Exception();
@@ -1306,7 +1340,7 @@ namespace CSharpComicViewer.WPF
             {
                 foreach (string file in files)
                 {
-                    if (!File.Exists(file))
+                    if (!File.Exists(file) && !Directory.Exists(file))
                     {
                         ShowMessage("One or more archives not found");
                         throw new Exception();
@@ -1335,7 +1369,7 @@ namespace CSharpComicViewer.WPF
             {
                 foreach (string file in files)
                 {
-                    if (!File.Exists(file))
+                    if (!File.Exists(file) && !Directory.Exists(file))
                     {
                         ShowMessage("One or more archives not found");
                         throw new Exception();

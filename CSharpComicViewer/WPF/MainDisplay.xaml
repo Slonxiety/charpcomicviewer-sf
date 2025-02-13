@@ -159,7 +159,11 @@
 					InputGestureText="L"
 					Name="LoadFile_RightClick"
 					Click="Load_Click" />
-				<MenuItem
+                <MenuItem
+					Header="Load folder"
+                    Name="LoadFolder_RightClick"
+                    Click="Load_Folder_Click" />
+                <MenuItem
 					Header="Next page"
 					InputGestureText="Pg Dn"
 					Name="NextPage_RightClick"
