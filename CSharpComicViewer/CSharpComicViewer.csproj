@@ -45,7 +45,7 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\Debug\</OutputPath>
     <DocumentationFile>bin\Debug\csharp-comicviewer.XML</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
