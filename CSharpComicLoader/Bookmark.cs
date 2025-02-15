@@ -151,7 +151,11 @@ namespace CSharpComicLoader
 				filename += filePathSplit[i];
 			}
 
-			return filename;
+			if (filename == "")
+				filename = fileNameWithExtension;
+
+
+            return filename;
 		}
 	}
 }
