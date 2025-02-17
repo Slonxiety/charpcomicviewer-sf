@@ -1175,9 +1175,9 @@ namespace CSharpComicViewer.WPF
             _imageUtils.ObjectValue = imageAsBytes;
             this.Background = _imageUtils.BackgroundColor;
 
-            if (Configuration.OverideHeight || Configuration.OverideWidth)
+            if (Configuration.ImageMode != ImageMode.Normal)
             {
-                _imageUtils.ResizeImage(new System.Drawing.Size(bitmapimage.PixelWidth, (int)ScrollField.ViewportHeight), Configuration.OverideHeight, Configuration.OverideWidth);
+                _imageUtils.ResizeImage(new System.Drawing.SizeF((float)ScrollField.ViewportWidth, (float)ScrollField.ViewportHeight), Configuration.ImageMode);
                 bitmapimage = GetImage(_imageUtils.ObjectValueAsBytes);
             }
 
@@ -1432,35 +1432,15 @@ namespace CSharpComicViewer.WPF
         /// </summary>
         public void ToggleImageOptions()
         {
-            if (!Configuration.OverideHeight && !Configuration.OverideWidth)
-            {
-                //normal to hight
-                Configuration.OverideHeight = true;
+            int option_count = Enum.GetNames(typeof(ImageMode)).Length;
+            Configuration.ImageMode = (ImageMode)(((int)Configuration.ImageMode + 1) % option_count);
 
-                DisplayedImage.Height = 40;
-                ShowMessage("Fit to height.");
-            }
-            else if (Configuration.OverideHeight && !Configuration.OverideWidth)
-            {
-                //hight to width
-                Configuration.OverideHeight = false;
-                Configuration.OverideWidth = true;
-                ShowMessage("Fit to width.");
-            }
-            else if (!Configuration.OverideHeight && Configuration.OverideWidth)
-            {
-                //width to screen
-                Configuration.OverideHeight = true;
-                Configuration.OverideWidth = true;
-                ShowMessage("Fit to screen.");
-            }
-            else if (Configuration.OverideHeight && Configuration.OverideWidth)
-            {
-                //screen to normal
-                Configuration.OverideHeight = false;
-                Configuration.OverideWidth = false;
-                ShowMessage("Normal mode.");
-            }
+            if (Configuration.ImageMode == ImageMode.FitToWidth)       ShowMessage("Fit to width.");
+            if (Configuration.ImageMode == ImageMode.FitToHeight)      ShowMessage("Fit to height.");
+            if (Configuration.ImageMode == ImageMode.FitToScreen)      ShowMessage("Fit to screen.");
+            if (Configuration.ImageMode == ImageMode.FitToShort)       ShowMessage("Fit to short side.");
+            if (Configuration.ImageMode == ImageMode.FitToShortScaled) ShowMessage("Fit to short side by proportion.");
+            if (Configuration.ImageMode == ImageMode.Normal)           ShowMessage("Normal mode.");
 
             if (DisplayedImage.Source != null)
             {

@@ -45,28 +45,18 @@ namespace CSharpComicViewer.Configuration
 		/// </value>
 		public List<Bookmark> Bookmarks { get; set; }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether to override height.
-		/// </summary>
-		/// <value>
-		///   <c>true</c> if height should be overridden; otherwise, <c>false</c>.
-		/// </value>
-		public bool OverideHeight { get; set; }
+        /// <summary>
+        /// Gets or sets the method to handle the image.
+        /// </summary>
+		public ImageMode ImageMode { get; set; }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether to override width.
-		/// </summary>
-		/// <value>
-		///   <c>true</c> if width should be overridden; otherwise, <c>false</c>.
-		/// </value>
-		public bool OverideWidth { get; set; }
-
-		/// <summary>
-		/// Gets or sets a value indicating whether this <see cref="Configuration"/> is windowed.
-		/// </summary>
-		/// <value>
-		///   <c>true</c> if windowed; otherwise, <c>false</c>.
-		/// </value>
-		public bool Windowed { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether this <see cref="Configuration"/> is windowed.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if windowed; otherwise, <c>false</c>.
+        /// </value>
+        public bool Windowed { get; set; }
 	}
+	
 }

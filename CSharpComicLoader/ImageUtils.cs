@@ -24,6 +24,8 @@ using System.IO;
 using System.Drawing;
 using System.Windows.Media;
 using System.Drawing.Drawing2D;
+using CSharpComicViewer.Configuration;
+using System.Security.Principal;
 
 
 namespace CSharpComicLoader
@@ -284,67 +286,71 @@ namespace CSharpComicLoader
 		}
 
 
-		/// <summary>
-		/// Resizes the image.
-		/// </summary>
-		/// <param name="size">The size.</param>
-		/// <param name="overideHight">if set to <c>true</c> [overide hight].</param>
-		/// <param name="overideWidth">if set to <c>true</c> [overide width].</param>
-		public void ResizeImage(Size size, bool overideHight, bool overideWidth)
+        /// <summary>
+        /// Resizes the image.
+        /// </summary>
+        /// <param name="viewportSize">The size of viewport.</param>
+        /// <param name="imageMode">The way of handling image.</param>
+        public void ResizeImage(SizeF viewportSize, ImageMode imageMode)
 		{
-			ResizeImage(size, overideHight, overideWidth, InterpolationMode.HighQualityBicubic);
+			ResizeImage(viewportSize, imageMode, InterpolationMode.HighQualityBicubic);
 		}
 
-		/// <summary>
-		/// Resizes the image.
-		/// </summary>
-		/// <param name="size">The size.</param>
-		/// <param name="overideHight">if set to <c>true</c> [overide hight].</param>
-		/// <param name="overideWidth">if set to <c>true</c> [overide width].</param>
-		/// <param name="interpolationMode">The interpolation mode.</param>
-		public void ResizeImage(Size size, bool overideHight, bool overideWidth, InterpolationMode interpolationMode)
+        /// <summary>
+        /// Resizes the image.
+        /// </summary>
+        /// <param name="viewportSize">The size of viewport.</param>
+        /// <param name="imageMode">The way of handling image.</param>
+        /// <param name="interpolationMode">The interpolation mode.</param>
+        public void ResizeImage(SizeF viewportSize, ImageMode imageMode, InterpolationMode interpolationMode)
 		{
 			if (image != null)
 			{
-
-				int sourceWidth = image.Width;
+                //ImageMode imageMode
+                int sourceWidth = image.Width;
 				int sourceHeight = image.Height;
 
-				float nPercent = 0;
-				float nPercentW = 0;
-				float nPercentH = 0;
-
-				if (!overideHight && overideWidth)
+				float zoomW = 1, zoomH = 1;
+				// Different for unison scaled or two-way scaled
+				if (imageMode == ImageMode.FitToScreen)
 				{
-					size.Width = ScreenWidth;
-				}
+					zoomW = viewportSize.Width / (float)sourceWidth;
+					zoomH = viewportSize.Height / (float)sourceHeight;
+                }
+				else
+                {
+                    // For unison scaled
+                    float zoom = 1;
+                    switch (imageMode)
+                    {
+                        case ImageMode.FitToHeight:
+                            zoom = viewportSize.Height / (float)sourceHeight;
+                            break;
 
-				nPercentW = ((float)size.Width / (float)sourceWidth);
-				nPercentH = ((float)size.Height / (float)sourceHeight);
+                        case ImageMode.FitToWidth:
+                            zoom = viewportSize.Width / (float)sourceWidth;
+                            break;
 
-				if (!overideHight && !overideWidth)
-				{
-					if (nPercentH < nPercentW)
-						nPercent = nPercentH;
-					else
-						nPercent = nPercentW;
-				}
-				else if (overideHight && !overideWidth)
-					nPercent = nPercentH;
-				else if (!overideHight && overideWidth)
-				{
-					nPercent = nPercentW;
-				}
+						case ImageMode.FitToShort:
+							zoom = (viewportSize.Height < viewportSize.Width) ?
+									viewportSize.Height / (float)sourceHeight : viewportSize.Width / (float)sourceWidth;
+							break;
 
-				int destWidth = (int)(sourceWidth * nPercent);
-				int destHeight = (int)(sourceHeight * nPercent);
+						case ImageMode.FitToShortScaled:
+							zoom = Math.Max(viewportSize.Height / (float)sourceHeight,
+											viewportSize.Width / (float)sourceWidth);
+                            break;
 
-				if (overideHight && overideWidth)
-				{
-					destWidth = (int)(ScreenWidth);
-					destHeight = (int)(ScreenHeight);
-				}
+						case ImageMode.Normal:
+							zoom = 1;
+							break;
+                    }
+					zoomW = zoom;
+					zoomH = zoom;
+                }
 
+				int destWidth = (int)(sourceWidth * zoomW);
+				int destHeight = (int)(sourceHeight * zoomH);
 
 				Bitmap b = new Bitmap(destWidth, destHeight);
 				Graphics g = Graphics.FromImage((Image)b);
