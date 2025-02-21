@@ -27,8 +27,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Xml.Serialization;
 using CSharpComicLoader;
-using CSharpComicLoader.Comic;
-using CSharpComicLoader.File;
+using CSharpComicLoader.FileStructure;
+using CSharpComicLoader.FileStructure.OldStructure;
 using CSharpComicViewer.Configuration;
 using Microsoft.Win32;
 
@@ -48,14 +48,7 @@ namespace CSharpComicViewer.WPF
         /// The opening file.
         /// </value>
         private string _openingFile;
-
-        /// <summary>
-        /// Gets or sets the comic book.
-        /// </summary>
-        /// <value>
-        /// The comic book.
-        /// </value>
-        private ComicBook _comicBook;
+        private FileViewModel _fileViewModel;
 
         /// <summary>
         /// Gets or sets the next page count.
@@ -74,19 +67,9 @@ namespace CSharpComicViewer.WPF
         private int _previousPageCount;
 
         /// <summary>
-        /// The comic page (ea the displayed image)
-        /// </summary>
-        private ImageUtils _imageUtils;
-
-        /// <summary>
         /// The information Text
         /// </summary>
         private InformationText _informationText;
-
-        /// <summary>
-        /// The file loader.
-        /// </summary>
-        private FileLoader _fileLoader;
 
         /// <summary>
         /// The show message timer.
@@ -267,8 +250,7 @@ namespace CSharpComicViewer.WPF
             //Ensure that the window is active on start
             this.Activate();
 
-            _imageUtils = new ImageUtils();
-            _fileLoader = new FileLoader();
+            _fileViewModel = new CSharpComicLoader.FileStructure.OldStructure.FileViewModel();
 
             //set mouse idle timer
             _timeoutToHide = TimeSpan.FromSeconds(2);
@@ -291,7 +273,7 @@ namespace CSharpComicViewer.WPF
             {
                 foreach (string file in Configuration.Resume.Files)
                 {
-                    if (!File.Exists(file) && !Directory.Exists(file))
+                    if (!System.IO.File.Exists(file) && !Directory.Exists(file))
                     {
                         ResumeFile_MenuBar.IsEnabled = false;
                         ResumeFile_RightClick.IsEnabled = false;
@@ -306,13 +288,11 @@ namespace CSharpComicViewer.WPF
 
             _scrollValueHorizontal = (int)(ScrollField.ViewportHeight * 0.05);
             _scrollValueVertical = (int)(ScrollField.ViewportWidth * 0.05);
-            _imageUtils.ScreenHeight = (int)ScrollField.ViewportHeight;
-            _imageUtils.ScreenWidth = (int)ScrollField.ViewportWidth;
 
             //open file (when opening associated by double click)
             if (_openingFile != null)
             {
-                LoadAndDisplayComic(false);
+                LoadFile();
             }
         }
 
@@ -340,7 +320,7 @@ namespace CSharpComicViewer.WPF
                 string userFilePath = Path.Combine(localAppData, "C# Comicviewer");
 
                 XmlSerializer mySerializer = new XmlSerializer(typeof(Configuration.Configuration));
-                if (File.Exists(userFilePath + "\\Configuration.xml"))
+                if (System.IO.File.Exists(userFilePath + "\\Configuration.xml"))
                 {
                     System.IO.FileStream myFileStream = new System.IO.FileStream(userFilePath + "\\Configuration.xml", System.IO.FileMode.Open);
                     Configuration = (Configuration.Configuration)mySerializer.Deserialize(myFileStream);
@@ -392,9 +372,9 @@ namespace CSharpComicViewer.WPF
         /// </summary>
         private void SaveResumeToConfiguration()
         {
-            if (_comicBook != null && _comicBook.TotalFiles != 0)
+            if (_fileViewModel.IsFileLoaded())
             {
-                Bookmark data = _comicBook.GetBookmark();
+                Session data = _fileViewModel.GetSession();
                 Configuration.Resume = data;
             }
         }
@@ -456,7 +436,7 @@ namespace CSharpComicViewer.WPF
                 {
                     Bookmark bookmark = Configuration.Bookmarks[i - 3];
 
-                    LoadAndDisplayComic(bookmark.Files, bookmark.FileNumber, bookmark.PageNumber);
+                    LoadFile(bookmark.Files, bookmark.FileNumber, bookmark.PageNumber);
                 }
             }
 
@@ -467,7 +447,7 @@ namespace CSharpComicViewer.WPF
                 {
                     Bookmark bookmark = Configuration.Bookmarks[i - 3];
 
-                    LoadAndDisplayComic(bookmark.Files, bookmark.FileNumber, bookmark.PageNumber);
+                    LoadFile(bookmark.Files, bookmark.FileNumber, bookmark.PageNumber);
                 }
             }
         }
@@ -513,7 +493,7 @@ namespace CSharpComicViewer.WPF
                     _mouseIsHidden = false;
                 }
 
-                LoadAndDisplayComic(true);
+                ShowFileDialogAndLoad();
             }
 
             if (e.Key == Key.M)
@@ -528,15 +508,16 @@ namespace CSharpComicViewer.WPF
 
             if (e.Key == Key.N)
             {
-                if (_comicBook != null && _comicBook.TotalFiles != 0)
+                
+                if (_fileViewModel.IsFileLoaded())
                 {
-                    if (string.IsNullOrEmpty(_comicBook.CurrentFile.InfoText))
+                    if (string.IsNullOrEmpty(_fileViewModel.GetCurrentInfo()))
                     {
                         ShowMessage("No information text");
                     }
                     else
                     {
-                        _informationText = new InformationText(_comicBook.CurrentFile.Location, _comicBook.CurrentFile.InfoText);
+                        _informationText = new InformationText(_fileViewModel.GetCurrentLocation(), _fileViewModel.GetCurrentInfo());
                         _informationText.ShowDialog();
                     }
                 }
@@ -564,12 +545,10 @@ namespace CSharpComicViewer.WPF
 
                 _scrollValueHorizontal = (int)(ScrollField.ViewportHeight * 0.05);
                 _scrollValueVertical = (int)(ScrollField.ViewportWidth * 0.05);
-                _imageUtils.ScreenHeight = (int)ScrollField.ViewportHeight;
-                _imageUtils.ScreenWidth = (int)ScrollField.ViewportWidth;
 
                 if (DisplayedImage.Source != null)
                 {
-                    DisplayImage(_comicBook.CurrentFile.CurrentPage, ImageStartPosition.Top);
+                    DisplayImage(_fileViewModel.GetImage(), ImageStartPosition.Top);
                 }
             }
 
@@ -593,55 +572,17 @@ namespace CSharpComicViewer.WPF
         /// <param name="e">The <see cref="System.Windows.Input.KeyEventArgs"/> instance containing the event data.</param>
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Home && !Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+            if (_fileViewModel.IsFileLoaded())
             {
-                // first page of all
-                if (_comicBook.TotalFiles != 0)
-                {
-                    byte[] image = _comicBook.GetPage(0, 0);
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Top);
-                    }
-                }
-            }
+                if (e.Key == Key.Home && !Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) _fileViewModel.PointToHome();
+                if (e.Key == Key.Home && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))  _fileViewModel.PointToBegin();
+                if (e.Key == Key.End && !Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))  _fileViewModel.PointToEnd();
+                if (e.Key == Key.End && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))   _fileViewModel.PointToLast();
 
-            if (e.Key == Key.Home && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
-            {
-                // first page of current archive
-                if (_comicBook.TotalFiles != 0)
+                byte[] image = _fileViewModel.GetImage();
+                if (image != null)
                 {
-                    byte[] image = _comicBook.GetPage(0);
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Top);
-                    }
-                }
-            }
-
-            if (e.Key == Key.End && !Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
-            {
-                // last page of all
-                if (_comicBook.TotalFiles != 0)
-                {
-                    byte[] image = _comicBook.GetPage(_comicBook.TotalFiles - 1, _comicBook[_comicBook.TotalFiles - 1].TotalPages - 1);
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Top);
-                    }
-                }
-            }
-
-            if (e.Key == Key.End && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
-            {
-                // last page of current archive
-                if (_comicBook.TotalFiles != 0)
-                {
-                    byte[] image = _comicBook.GetPage(_comicBook.CurrentFile.TotalPages - 1);
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Top);
-                    }
+                    DisplayImage(image, ImageStartPosition.Top);
                 }
             }
 
@@ -931,7 +872,7 @@ namespace CSharpComicViewer.WPF
         {
             if (Configuration.Resume != null)
             {
-                LoadAndDisplayComic(Configuration.Resume.Files, Configuration.Resume.FileNumber, Configuration.Resume.PageNumber);
+                LoadFile(Configuration.Resume.Files, Configuration.Resume.FileNumber, Configuration.Resume.PageNumber);
             }
         }
 
@@ -942,7 +883,7 @@ namespace CSharpComicViewer.WPF
         /// <param name="e">The <see cref="System.Windows.RoutedEventArgs"/> instance containing the event data.</param>
         private void Load_Click(object sender, RoutedEventArgs e)
         {
-            LoadAndDisplayComic(true);
+            ShowFileDialogAndLoad();
         }
 
         /// <summary>
@@ -952,7 +893,7 @@ namespace CSharpComicViewer.WPF
         /// <param name="e">The <see cref="System.Windows.RoutedEventArgs"/> instance containing the event data.</param>
         private void Load_Folder_Click(object sender, RoutedEventArgs e)
         {
-            LoadAndDisplayComic(true, true);
+            ShowFolderDialogAndLoad();
         }
 
         /// <summary>
@@ -1022,9 +963,9 @@ namespace CSharpComicViewer.WPF
         /// <param name="e">The <see cref="System.Windows.RoutedEventArgs"/> instance containing the event data.</param>
         private void AddBookmark_Click(object sender, RoutedEventArgs e)
         {
-            if (_comicBook != null)
+            if (_fileViewModel.IsFileLoaded())
             {
-                Configuration.Bookmarks.Add(_comicBook.GetBookmark());
+                Configuration.Bookmarks.Add(_fileViewModel.GetBookmark());
                 SetBookmarkMenus();
                 ShowMessage("Bookmark added.");
             }
@@ -1090,16 +1031,9 @@ namespace CSharpComicViewer.WPF
         /// </summary>
         public void ShowPageInformation()
         {
-            if (_comicBook != null)
+            if (_fileViewModel.IsFileLoaded())
             {
-                if (_fileLoader.PageType == PageType.Archive)
-                {
-                    PageInfoBox.Text = "Archive " + _comicBook.CurrentFileNumber + "/" + _comicBook.TotalFiles + "\r\nArchive name: " + _comicBook.CurrentFile.FileName + "\r\nPage: " + _comicBook.CurrentPageNumber + "/" + _comicBook.TotalPages;
-                }
-                else
-                {
-                    PageInfoBox.Text = "File name: " + _comicBook.CurrentFile.FileName + "\r\nPage: " + _comicBook.CurrentPageNumber + "/" + _comicBook.TotalPages;
-                }
+                PageInfoBox.Text = _fileViewModel.GetPageInfo();
 
                 PageInfoBox.Visibility = System.Windows.Visibility.Visible;
 
@@ -1130,7 +1064,7 @@ namespace CSharpComicViewer.WPF
         /// </summary>
         private void UpdatePageInformation()
         {
-            PageInfoBox.Text = "Archive" + _comicBook.CurrentFileNumber + "/" + _comicBook.TotalFiles + "\r\nPage: " + _comicBook.CurrentPageNumber + "/" + _comicBook.TotalPages;
+            PageInfoBox.Text = _fileViewModel.GetPageInfo();
         }
         #endregion
 
@@ -1170,16 +1104,24 @@ namespace CSharpComicViewer.WPF
                     }
             }
 
-            BitmapImage bitmapimage = GetImage(imageAsBytes);
+            System.Drawing.Image image = ImageUtils.ConvertToImage(imageAsBytes);
 
-            _imageUtils.ObjectValue = imageAsBytes;
-            this.Background = _imageUtils.BackgroundColor;
+            BitmapImage bitmapimage;
 
-            if (Configuration.ImageMode != ImageMode.Normal)
+            if (Configuration.ImageMode == ImageMode.Normal)
             {
-                _imageUtils.ResizeImage(new System.Drawing.SizeF((float)ScrollField.ViewportWidth, (float)ScrollField.ViewportHeight), Configuration.ImageMode);
-                bitmapimage = GetImage(_imageUtils.ObjectValueAsBytes);
+                bitmapimage = ImageUtils.ConverToBitmapImage(imageAsBytes);
             }
+            else
+            {
+                var resize_image = ImageUtils.GetResizeImage(image,
+                        new System.Drawing.SizeF((float)ScrollField.ViewportWidth, (float)ScrollField.ViewportHeight),
+                        Configuration.ImageMode);
+
+                bitmapimage = ImageUtils.ConverToBitmapImage(resize_image);
+            }
+
+            this.Background = ImageUtils.GetBackgroundColor(image);
 
             DisplayedImage.Source = bitmapimage;
             DisplayedImage.Width = bitmapimage.PixelWidth;
@@ -1252,139 +1194,70 @@ namespace CSharpComicViewer.WPF
             return bi;
         }
 
+
+
+        /// <summary>
+        /// Show folder dialog, load archive(s) and display first page
+        /// </summary>
+        public void ShowFolderDialogAndLoad()
+        {
+            var openFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
+            if (_fileViewModel.IsFileLoaded())
+            {
+                CSharpComicLoader.Bookmark bookmark = _fileViewModel.GetBookmark();
+                openFolderDialog.RootFolder = Environment.SpecialFolder.Desktop;
+                openFolderDialog.SelectedPath = bookmark.GetCurrentFileDirectoryLocation();
+            }
+
+            if (openFolderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string[] files = new string[] { openFolderDialog.SelectedPath };
+                LoadFile(files);
+            }
+        }
+
+        /// <summary>
+        /// Show file dialog, load archive(s) and display first page
+        /// </summary>
+        public void ShowFileDialogAndLoad ()
+        {
+
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            if (_fileViewModel.IsFileLoaded())
+            {
+                CSharpComicLoader.Bookmark bookmark = _fileViewModel.GetBookmark();
+                openFileDialog.InitialDirectory = bookmark.GetCurrentFileDirectoryLocation();
+            }
+
+            openFileDialog.Filter = Utils.FileLoaderFilter;
+            openFileDialog.Multiselect = true;
+            openFileDialog.ShowDialog();
+
+            if (openFileDialog.FileNames.Length <= 0)
+            {
+                return;
+            }
+
+            string[] files = openFileDialog.FileNames;
+            LoadFile(files);
+        }
+
+
         /// <summary>
         /// Load archive(s) and display first page
         /// </summary>
-        /// <param name="askOpenFileDialog">Should file dialog be used?</param>
-        /// <param name="select_folder">Use file dialog or folder dialog</param>
-        public void LoadAndDisplayComic(bool askOpenFileDialog, bool select_folder = false)
-        {
-            try
-            {
-                string[] files;
+        public void LoadFile(Session session) => LoadFile(session.Files, session.FileNumber, session.PageNumber);
 
-                if (askOpenFileDialog)
-                {
-                    if (select_folder)
-                    {
-                        var openFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
-                        if (_comicBook != null)
-                        {
-                            Bookmark bookmark = _comicBook.GetBookmark();
-                            openFolderDialog.RootFolder = Environment.SpecialFolder.Desktop;
-                            openFolderDialog.SelectedPath = bookmark.GetCurrentFileDirectoryLocation();
-                        }
-                        
-                        if (openFolderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                        {
-                            files = new string[] { openFolderDialog.SelectedPath };
-                        }
-                        else
-                        {
-                            throw new Exception(); //dunno why but follow tradition
-                        }
-                        
-                    }
-                    else
-                    {
-                        OpenFileDialog openFileDialog = new OpenFileDialog();
-                        if (_comicBook != null)
-                        {
-                            Bookmark bookmark = _comicBook.GetBookmark();
-                            openFileDialog.InitialDirectory = bookmark.GetCurrentFileDirectoryLocation();
-                        }
-
-                        openFileDialog.Filter = Utils.FileLoaderFilter;
-                        openFileDialog.Multiselect = true;
-                        openFileDialog.ShowDialog();
-
-                        if (openFileDialog.FileNames.Length <= 0)
-                        {
-                            throw new Exception();
-                        }
-
-                        files = openFileDialog.FileNames;
-                    }
-                }
-                else
-                {
-                    files = new string[] { _openingFile };
-                }
-
-                foreach (string file in files)
-                {
-                    if (!File.Exists(file) && !Directory.Exists(file))
-                    {
-                        ShowMessage("One or more archives not found");
-                        throw new Exception();
-                    }
-                }
-
-                Mouse.OverrideCursor = Cursors.Wait;
-                LoadFile(files, 0, 0);
-            }
-            catch
-            {
-            }
-
-            Mouse.OverrideCursor = Cursors.Arrow;
-        }
+        /// <summary>
+        /// Load archive(s) and display first page
+        /// </summary>
+        public void LoadFile() => LoadFile(new string[] { _openingFile });
 
         /// <summary>
         /// Load archive(s) and display first page
         /// </summary>
         /// <param name="files">Array with archive locations</param>
-        public void LoadAndDisplayComic(string[] files)
-        {
-            try
-            {
-                foreach (string file in files)
-                {
-                    if (!File.Exists(file) && !Directory.Exists(file))
-                    {
-                        ShowMessage("One or more archives not found");
-                        throw new Exception();
-                    }
-                }
-
-                Mouse.OverrideCursor = Cursors.Wait;
-                LoadFile(files, 0, 0);
-            }
-            catch
-            {
-            }
-
-            Mouse.OverrideCursor = Cursors.Arrow;
-        }
-
-        /// <summary>
-        /// Load archive(s) and display a page of choice
-        /// </summary>
-        /// <param name="files">Array with archive locations</param>
-        /// <param name="fileNumber">File in array to start at</param>
-        /// <param name="pageNumber">Page on which to start from selected file</param>
-        public void LoadAndDisplayComic(string[] files, int fileNumber, int pageNumber)
-        {
-            try
-            {
-                foreach (string file in files)
-                {
-                    if (!File.Exists(file) && !Directory.Exists(file))
-                    {
-                        ShowMessage("One or more archives not found");
-                        throw new Exception();
-                    }
-                }
-
-                Mouse.OverrideCursor = Cursors.Wait;
-                LoadFile(files, fileNumber, pageNumber);
-            }
-            catch
-            {
-            }
-
-            Mouse.OverrideCursor = Cursors.Arrow;
-        }
+        public void LoadFile(string[] files) => LoadFile(files, 0, 0);
 
         /// <summary>
         /// Load the archives
@@ -1394,37 +1267,45 @@ namespace CSharpComicViewer.WPF
         /// <param name="pageNumber">Page on which to start from selected file</param>
         public void LoadFile(string[] files, int fileNumber, int pageNumber)
         {
-            _fileLoader.Load(files);
-
-            if (_fileLoader.LoadedFileData.HasFile)
+            foreach (string file in files)
             {
-                _comicBook = _fileLoader.LoadedFileData.ComicBook;
-
-                foreach (ComicFile comicFile in _comicBook)
+                if (!System.IO.File.Exists(file) && !Directory.Exists(file))
                 {
-                    if (!string.IsNullOrEmpty(comicFile.InfoText))
-                    {
-                        Mouse.OverrideCursor = Cursors.Arrow;
-                        _informationText = new InformationText(comicFile.Location, comicFile.InfoText);
-                        _informationText.ShowDialog();
-                        Mouse.OverrideCursor = Cursors.Wait;
-                    }
-                }
-
-                DisplayImage(_comicBook.GetPage(fileNumber, pageNumber), ImageStartPosition.Top);
-                if (!string.IsNullOrEmpty(_fileLoader.Error))
-                {
-                    ShowMessage(_fileLoader.Error);
+                    ShowMessage("One or more archives not found");
+                    return;
                 }
             }
-            else if (!string.IsNullOrEmpty(_fileLoader.Error))
+            
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            var result = _fileViewModel.Load(new Session(files, fileNumber, pageNumber));
+
+            if (result.HasFile)
             {
-                ShowMessage(_fileLoader.Error);
+                foreach (var info in _fileViewModel.GetAllInfo())
+                {
+                    Mouse.OverrideCursor = Cursors.Arrow;
+                    _informationText = new InformationText(info.Title, info.Content);
+                    _informationText.ShowDialog();
+                    Mouse.OverrideCursor = Cursors.Wait;
+                }
+
+                DisplayImage(_fileViewModel.GetImage(), ImageStartPosition.Top);
+                if (result.HasError)
+                {
+                    ShowMessage(result.Error);
+                }
+            }
+            else if (result.HasError)
+            {
+                ShowMessage(result.Error);
             }
             else
             {
                 ShowMessage("No supported files found.");
             }
+
+            Mouse.OverrideCursor = Cursors.Arrow;
         }
 
         /// <summary>
@@ -1444,7 +1325,7 @@ namespace CSharpComicViewer.WPF
 
             if (DisplayedImage.Source != null)
             {
-                DisplayImage(_comicBook.CurrentFile.CurrentPage, ImageStartPosition.Top);
+                DisplayImage(_fileViewModel.GetImage(), ImageStartPosition.Top);
             }
         }
 
@@ -1453,24 +1334,19 @@ namespace CSharpComicViewer.WPF
         /// </summary>
         private void NextFile()
         {
-            if (_comicBook != null)
+            if (_fileViewModel.IsFileLoaded())
             {
-                if (_comicBook.NextFile() == null)
+                _fileViewModel.PointToNextFile();
+                byte[] image = _fileViewModel.GetImage();
+
+                if (image == null)
                 {
-                    FileNextPrevious fileNextPrevious = new FileNextPrevious();
-                    string file = fileNextPrevious.GetNextFileInDirectory(_comicBook.CurrentFile.Location);
-                    if (!string.IsNullOrEmpty(file))
-                    {
-                        LoadAndDisplayComic(new string[] { file });
-                    }
+                    Session loadNext = _fileViewModel.GetOutOfRangeNextSession();
+                    if (loadNext != null) LoadFile(loadNext);
                 }
                 else
                 {
-                    byte[] image = _comicBook.CurrentFile.CurrentPage;
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Top);
-                    }
+                    DisplayImage(image, ImageStartPosition.Top);
                 }
             }
         }
@@ -1480,24 +1356,19 @@ namespace CSharpComicViewer.WPF
         /// </summary>
         private void PreviousFile()
         {
-            if (_comicBook != null)
+            if (_fileViewModel.IsFileLoaded())
             {
-                if (_comicBook.PreviousFile() == null)
+                _fileViewModel.PointToPreviousFile();
+                byte[] image = _fileViewModel.GetImage();
+
+                if (image == null)
                 {
-                    FileNextPrevious fileNextPrevious = new FileNextPrevious();
-                    string file = fileNextPrevious.GetPreviousFileInDirectory(_comicBook.CurrentFile.Location);
-                    if (!string.IsNullOrEmpty(file))
-                    {
-                        LoadAndDisplayComic(new string[] { file });
-                    }
+                    Session loadPrevious = _fileViewModel.GetOutOfRangePreviousSession();
+                    if (loadPrevious != null) LoadFile(loadPrevious);
                 }
                 else
                 {
-                    byte[] image = _comicBook.CurrentFile.CurrentPage;
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Bottom);
-                    }
+                    DisplayImage(image, ImageStartPosition.Bottom);
                 }
             }
         }
@@ -1507,35 +1378,33 @@ namespace CSharpComicViewer.WPF
         /// </summary>
         public void NextPage()
         {
-            if (_comicBook != null)
+            if (_fileViewModel.IsFileLoaded())
             {
-                if (_comicBook.TotalFiles != 0)
+                _fileViewModel.PointToNextPage();
+                byte[] image = _fileViewModel.GetImage();
+                if (image != null)
                 {
-                    byte[] image = _comicBook.NextPage();
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Top);
-                    }
+                    DisplayImage(image, ImageStartPosition.Top);
                 }
             }
         }
+
 
         /// <summary>
         /// Go to previous page
         /// </summary>
         public void PreviousPage()
         {
-            if (_comicBook != null)
+            if (_fileViewModel.IsFileLoaded())
             {
-                if (_comicBook.TotalFiles != 0)
+                _fileViewModel.PointToPreviousPage();
+                byte[] image = _fileViewModel.GetImage();
+                if (image != null)
                 {
-                    byte[] image = _comicBook.PreviousPage();
-                    if (image != null)
-                    {
-                        DisplayImage(image, ImageStartPosition.Bottom);
-                    }
+                    DisplayImage(image, ImageStartPosition.Bottom);
                 }
             }
+
         }
 
         /// <summary>

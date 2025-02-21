@@ -21,6 +21,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using CSharpComicLoader;
+using CSharpComicLoader.FileStructure;
 
 namespace CSharpComicViewer.Configuration
 {
@@ -35,15 +36,15 @@ namespace CSharpComicViewer.Configuration
 		/// <value>
 		/// The resume data.
 		/// </value>
-		public Bookmark Resume { get; set; }
+		public Session Resume { get; set; }
 
-		/// <summary>
-		/// Gets or sets the bookmarks.
-		/// </summary>
-		/// <value>
-		/// The bookmarks.
-		/// </value>
-		public List<Bookmark> Bookmarks { get; set; }
+        /// <summary>
+        /// Gets or sets the bookmarks.
+        /// </summary>
+        /// <value>
+        /// The bookmarks.
+        /// </value>
+        public List<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
 
         /// <summary>
         /// Gets or sets the method to handle the image.

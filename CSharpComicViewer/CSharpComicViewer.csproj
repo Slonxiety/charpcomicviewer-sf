@@ -91,7 +91,6 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="File\FileLoader.cs" />
     <Compile Include="Configuration\Configuration.cs" />
     <Compile Include="WPF\About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
