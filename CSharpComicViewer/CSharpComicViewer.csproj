@@ -95,8 +95,10 @@
     <Compile Include="WPF\About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WPF\BookmarkManager.xaml.cs">
-      <DependentUpon>BookmarkManager.xaml</DependentUpon>
+    <Compile Include="WPF\ItemManager\AbstractItemCollection.cs" />
+    <Compile Include="WPF\ItemManager\BookmarkItemCollection.cs" />
+    <Compile Include="WPF\ItemManager\ItemManager.xaml.cs">
+      <DependentUpon>ItemManager.xaml</DependentUpon>
     </Compile>
     <Compile Include="WPF\InformationText.xaml.cs">
       <DependentUpon>InformationText.xaml</DependentUpon>
@@ -149,7 +151,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WPF\BookmarkManager.xaml">
+    <Page Include="WPF\ItemManager\ItemManager.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

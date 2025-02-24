@@ -978,7 +978,7 @@ namespace CSharpComicViewer.WPF
         /// <param name="e">The <see cref="System.Windows.RoutedEventArgs"/> instance containing the event data.</param>
         private void ManageBookmarks_Click(object sender, RoutedEventArgs e)
         {
-            BookmarkManager bookmarkManager = new BookmarkManager(this);
+            ItemManager.ItemManager bookmarkManager = new ItemManager.ItemManager(new ItemManager.BookmarkItemCollection(Configuration.Bookmarks));
             bookmarkManager.ShowDialog();
             SetBookmarkMenus();
         }

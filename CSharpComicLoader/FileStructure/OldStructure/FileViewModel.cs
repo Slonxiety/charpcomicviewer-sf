@@ -15,22 +15,17 @@ namespace CSharpComicLoader.FileStructure.OldStructure
     {
         private FileLoader _fileLoader = new FileLoader();
         private FileNextPrevious _fileNextPrevious = new FileNextPrevious();
+        private ComicBook _comicBook;
         private byte[] _imageCache;
         
-        public ComicBook ComicBook { get; private set; }
-
-        public LoadResult Load(string[] files)
-        {
-            return Load(new Session(files, 0, 0));
-        }
         public LoadResult Load(Session session)
         {
             _fileLoader.Load(session.Files);
-            ComicBook = _fileLoader.LoadedFileData.ComicBook;
-            LoadResult result = new LoadResult(error: _fileLoader.Error, hasFile: (ComicBook != null && ComicBook.Count > 0));
+            _comicBook = _fileLoader.LoadedFileData.ComicBook;
+            LoadResult result = new LoadResult(error: _fileLoader.Error, hasFile: (_comicBook != null && _comicBook.Count > 0));
 
             if (!result.HasError)
-                _imageCache = ComicBook.GetPage(session.FileNumber, session.PageNumber);
+                _imageCache = _comicBook.GetPage(session.FileNumber, session.PageNumber);
 
             return result;
         }
@@ -41,56 +36,56 @@ namespace CSharpComicLoader.FileStructure.OldStructure
 
             if (_fileLoader.PageType == PageType.Archive)
             {
-                ret = "Archive " + ComicBook.CurrentFileNumber + "/" + ComicBook.TotalFiles + 
-                        "\r\nArchive name: " + ComicBook.CurrentFile.FileName + 
-                        "\r\nPage: " + ComicBook.CurrentPageNumber + "/" + ComicBook.TotalPages;
+                ret = "Archive " + _comicBook.CurrentFileNumber + "/" + _comicBook.TotalFiles + 
+                        "\r\nArchive name: " + _comicBook.CurrentFile.FileName + 
+                        "\r\nPage: " + _comicBook.CurrentPageNumber + "/" + _comicBook.TotalPages;
             }
             else
             {
-                ret = "File name: " + ComicBook.CurrentFile.FileName + 
-                        "\r\nPage: " + ComicBook.CurrentPageNumber + "/" + ComicBook.TotalPages;
+                ret = "File name: " + _comicBook.CurrentFile.FileName + 
+                        "\r\nPage: " + _comicBook.CurrentPageNumber + "/" + _comicBook.TotalPages;
             }
 
             return ret;
         }
 
-        public bool IsFileLoaded() => (ComicBook != null) && (ComicBook.TotalFiles != 0);
+        public bool IsFileLoaded() => (_comicBook != null) && (_comicBook.TotalFiles != 0);
 
-        public Session GetSession() => ComicBook.GetSession();
-        public Bookmark GetBookmark() => ComicBook.GetBookmark();
+        public Session GetSession() => _comicBook.GetSession();
+        public Bookmark GetBookmark() => _comicBook.GetBookmark();
 
         public byte[] GetImage() => _imageCache;
 
-        public void PointTo(int FileNumber, int PageNumber) => _imageCache = ComicBook.GetPage(FileNumber, PageNumber);
+        //public void PointTo(int FileNumber, int PageNumber) => _imageCache = _comicBook.GetPage(FileNumber, PageNumber);
 
-        public void PointToHome() => _imageCache = ComicBook.GetPage(0, 0);
-        public void PointToBegin() => _imageCache = ComicBook.GetPage(0);
-        public void PointToLast() => _imageCache = ComicBook.GetPage(ComicBook.CurrentFile.TotalPages - 1);
-        public void PointToEnd() => _imageCache = ComicBook.GetPage(ComicBook.TotalFiles - 1, ComicBook[ComicBook.TotalFiles - 1].TotalPages - 1);
-        public void PointToNextPage() => _imageCache = ComicBook.NextPage();
-        public void PointToNextFile() => _imageCache = ComicBook.NextFile();
-        public void PointToPreviousPage() => _imageCache = ComicBook.PreviousPage();
-        public void PointToPreviousFile() => _imageCache = ComicBook.PreviousFile();
+        public void PointToHome() => _imageCache = _comicBook.GetPage(0, 0);
+        public void PointToBegin() => _imageCache = _comicBook.GetPage(0);
+        public void PointToLast() => _imageCache = _comicBook.GetPage(_comicBook.CurrentFile.TotalPages - 1);
+        public void PointToEnd() => _imageCache = _comicBook.GetPage(_comicBook.TotalFiles - 1, _comicBook[_comicBook.TotalFiles - 1].TotalPages - 1);
+        public void PointToNextPage() => _imageCache = _comicBook.NextPage();
+        public void PointToNextFile() => _imageCache = _comicBook.NextFile();
+        public void PointToPreviousPage() => _imageCache = _comicBook.PreviousPage();
+        public void PointToPreviousFile() => _imageCache = _comicBook.PreviousFile();
 
 
         public Session GetOutOfRangeNextSession()
         {
-            string file = _fileNextPrevious.GetNextFileInDirectory(ComicBook.CurrentFile.Location);
+            string file = _fileNextPrevious.GetNextFileInDirectory(_comicBook.CurrentFile.Location);
             return new Session(new string[] { file }, 0, 0);
         }
 
         public Session GetOutOfRangePreviousSession()
         {
-            string file = _fileNextPrevious.GetPreviousFileInDirectory(ComicBook.CurrentFile.Location);
+            string file = _fileNextPrevious.GetPreviousFileInDirectory(_comicBook.CurrentFile.Location);
             return new Session(new string[] { file }, 0, 0);
         }
 
-        public string GetCurrentInfo() => ComicBook.CurrentFile.InfoText;
-        public string GetCurrentLocation() => ComicBook.CurrentFile.Location;
+        public string GetCurrentInfo() => _comicBook.CurrentFile.InfoText;
+        public string GetCurrentLocation() => _comicBook.CurrentFile.Location;
 
         public IEnumerable<InfoData> GetAllInfo()
         {
-            foreach (ComicFile comicFile in ComicBook)
+            foreach (ComicFile comicFile in _comicBook)
             {
                 if (!string.IsNullOrEmpty(comicFile.InfoText))
                 {
