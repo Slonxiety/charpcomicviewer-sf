@@ -21,9 +21,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using CSharpComicLoader.FileStructure;
 
-namespace CSharpComicLoader.Comic
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// A comic book object.

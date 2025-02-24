@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpComicLoader.FileStructure
+namespace CSharpComicLoader
 {
     public class InfoData
     {

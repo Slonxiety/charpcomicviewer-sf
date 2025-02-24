@@ -1,12 +1,11 @@
-﻿using CSharpComicLoader.File;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpComicLoader.Comic
+namespace CSharpComicLoader.NewFileStructure
 {
     public interface IReadOnlyFileCollection
     {

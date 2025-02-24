@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace CSharpComicLoader
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// Find and locate next and previous usable files(archives) in current dir
@@ -52,7 +52,7 @@ namespace CSharpComicLoader
 
 			int currentFileIndex = supportedFiles.IndexOf(currentFilePath);
 
-			if (currentFileIndex != -1 && currentFileIndex < supportedFiles.Count)
+			if (currentFileIndex != -1 && currentFileIndex < supportedFiles.Count - 1)
 			{
 				returnValue = supportedFiles[currentFileIndex + 1];
 			}

@@ -1,15 +1,12 @@
-﻿using CSharpComicLoader.Comic;
-using CSharpComicLoader.File;
-using CSharpComicViewer;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using static System.Collections.Specialized.BitVector32;
 
-namespace CSharpComicLoader.FileStructure.OldStructure
+namespace CSharpComicLoader.OldFileStructure
 {
     public class FileViewModel : IFileViewModel
     {
@@ -20,6 +17,14 @@ namespace CSharpComicLoader.FileStructure.OldStructure
         
         public LoadResult Load(Session session)
         {
+            foreach (string file in session.Files)
+            {
+                if (!System.IO.File.Exists(file) && !Directory.Exists(file))
+                {
+                    return new LoadResult("One or more archives not found", false);
+                }
+            }
+
             _fileLoader.Load(session.Files);
             _comicBook = _fileLoader.LoadedFileData.ComicBook;
             LoadResult result = new LoadResult(error: _fileLoader.Error, hasFile: (_comicBook != null && _comicBook.Count > 0));
@@ -29,6 +34,11 @@ namespace CSharpComicLoader.FileStructure.OldStructure
 
             return result;
         }
+
+        public LoadResult Load(Bookmark bookmark) => Load(new Session(bookmark.Files, bookmark.FileNumber, bookmark.PageNumber));
+
+        public Session CreateSessionFromFiles(string[] files) => new Session(files, 0, 0);
+        public Session CreateSessionFromFolder(string path) => new Session(new string[] { path }, 0, 0);
 
         public string GetPageInfo()
         {

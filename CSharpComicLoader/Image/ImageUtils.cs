@@ -24,7 +24,6 @@ using System.IO;
 using System.Drawing;
 using System.Windows.Media;
 using System.Drawing.Drawing2D;
-using CSharpComicViewer.Configuration;
 using System.Security.Principal;
 using System.Windows.Media.Imaging;
 

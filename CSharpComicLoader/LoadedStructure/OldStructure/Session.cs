@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace CSharpComicLoader.FileStructure
+namespace CSharpComicLoader.OldFileStructure
 {
     /// <summary>
 	/// A Bookmark

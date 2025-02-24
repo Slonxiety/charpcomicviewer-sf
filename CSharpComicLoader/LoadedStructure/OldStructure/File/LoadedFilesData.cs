@@ -20,9 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using CSharpComicLoader.Comic;
 
-namespace CSharpComicLoader.File
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// The object that is the result of a file load.

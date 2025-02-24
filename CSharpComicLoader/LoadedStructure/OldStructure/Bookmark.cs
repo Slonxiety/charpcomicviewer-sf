@@ -19,10 +19,8 @@
 using System;
 using System.Xml;
 using System.Xml.Serialization;
-using CSharpComicLoader.FileStructure;
-using CSharpComicViewer.Configuration;
 
-namespace CSharpComicLoader
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// A Bookmark

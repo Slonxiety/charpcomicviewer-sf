@@ -21,7 +21,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using CSharpComicLoader;
-using CSharpComicLoader.FileStructure;
+using CSharpComicLoader.OldFileStructure;
 
 namespace CSharpComicViewer.Configuration
 {

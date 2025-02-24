@@ -26,11 +26,10 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Xml.Serialization;
-using CSharpComicLoader;
-using CSharpComicLoader.FileStructure;
-using CSharpComicLoader.FileStructure.OldStructure;
-using CSharpComicViewer.Configuration;
 using Microsoft.Win32;
+
+using CSharpComicLoader;
+using CSharpComicLoader.OldFileStructure;
 
 namespace CSharpComicViewer.WPF
 {
@@ -250,7 +249,7 @@ namespace CSharpComicViewer.WPF
             //Ensure that the window is active on start
             this.Activate();
 
-            _fileViewModel = new CSharpComicLoader.FileStructure.OldStructure.FileViewModel();
+            _fileViewModel = new FileViewModel();
 
             //set mouse idle timer
             _timeoutToHide = TimeSpan.FromSeconds(2);
@@ -289,10 +288,23 @@ namespace CSharpComicViewer.WPF
             _scrollValueHorizontal = (int)(ScrollField.ViewportHeight * 0.05);
             _scrollValueVertical = (int)(ScrollField.ViewportWidth * 0.05);
 
-            //open file (when opening associated by double click)
+            //open file (when opening associated by double click) //OR drag file/folder to the application
             if (_openingFile != null)
             {
-                LoadFile();
+                FileAttributes attr = File.GetAttributes(_openingFile);
+
+                if (attr.HasFlag(FileAttributes.Directory))
+                {
+                    var session = _fileViewModel.CreateSessionFromFolder(_openingFile);
+                    LoadFile(session);
+                }
+                else
+                {
+                    var session = _fileViewModel.CreateSessionFromFiles(new string[] { _openingFile });
+                    LoadFile(session);
+                }
+
+                    
             }
         }
 
@@ -374,7 +386,7 @@ namespace CSharpComicViewer.WPF
         {
             if (_fileViewModel.IsFileLoaded())
             {
-                Session data = _fileViewModel.GetSession();
+                var data = _fileViewModel.GetSession();
                 Configuration.Resume = data;
             }
         }
@@ -401,7 +413,7 @@ namespace CSharpComicViewer.WPF
                 {
                     if (Configuration.Bookmarks.Count > 0)
                     {
-                        foreach (Bookmark currentBookmark in Configuration.Bookmarks)
+                        foreach (var currentBookmark in Configuration.Bookmarks)
                         {
                             string[] files = currentBookmark.Files;
                             MenuItem bookmark = new MenuItem();
@@ -434,9 +446,9 @@ namespace CSharpComicViewer.WPF
             {
                 if ((MenuItem)sender == Bookmarks_MenuRightClick.Items[i])
                 {
-                    Bookmark bookmark = Configuration.Bookmarks[i - 3];
+                    var bookmark = Configuration.Bookmarks[i - 3];
 
-                    LoadFile(bookmark.Files, bookmark.FileNumber, bookmark.PageNumber);
+                    LoadFile(bookmark);
                 }
             }
 
@@ -445,9 +457,9 @@ namespace CSharpComicViewer.WPF
             {
                 if ((MenuItem)sender == Bookmarks_MenuBar.Items[i])
                 {
-                    Bookmark bookmark = Configuration.Bookmarks[i - 3];
+                    var bookmark = Configuration.Bookmarks[i - 3];
 
-                    LoadFile(bookmark.Files, bookmark.FileNumber, bookmark.PageNumber);
+                    LoadFile(bookmark);
                 }
             }
         }
@@ -872,7 +884,7 @@ namespace CSharpComicViewer.WPF
         {
             if (Configuration.Resume != null)
             {
-                LoadFile(Configuration.Resume.Files, Configuration.Resume.FileNumber, Configuration.Resume.PageNumber);
+                LoadFile(Configuration.Resume);
             }
         }
 
@@ -1204,15 +1216,15 @@ namespace CSharpComicViewer.WPF
             var openFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
             if (_fileViewModel.IsFileLoaded())
             {
-                CSharpComicLoader.Bookmark bookmark = _fileViewModel.GetBookmark();
+                var bookmark = _fileViewModel.GetBookmark();
                 openFolderDialog.RootFolder = Environment.SpecialFolder.Desktop;
                 openFolderDialog.SelectedPath = bookmark.GetCurrentFileDirectoryLocation();
             }
 
             if (openFolderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                string[] files = new string[] { openFolderDialog.SelectedPath };
-                LoadFile(files);
+                var session = _fileViewModel.CreateSessionFromFolder(openFolderDialog.SelectedPath);
+                LoadFile(session);
             }
         }
 
@@ -1225,7 +1237,7 @@ namespace CSharpComicViewer.WPF
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (_fileViewModel.IsFileLoaded())
             {
-                CSharpComicLoader.Bookmark bookmark = _fileViewModel.GetBookmark();
+                var bookmark = _fileViewModel.GetBookmark();
                 openFileDialog.InitialDirectory = bookmark.GetCurrentFileDirectoryLocation();
             }
 
@@ -1238,26 +1250,20 @@ namespace CSharpComicViewer.WPF
                 return;
             }
 
-            string[] files = openFileDialog.FileNames;
-            LoadFile(files);
+            var session = _fileViewModel.CreateSessionFromFiles(openFileDialog.FileNames);
+            LoadFile(session);
         }
 
 
-        /// <summary>
-        /// Load archive(s) and display first page
-        /// </summary>
-        public void LoadFile(Session session) => LoadFile(session.Files, session.FileNumber, session.PageNumber);
+        public void LoadFile(Bookmark bookmark)
+        {
+            Mouse.OverrideCursor = Cursors.Wait;
 
-        /// <summary>
-        /// Load archive(s) and display first page
-        /// </summary>
-        public void LoadFile() => LoadFile(new string[] { _openingFile });
+            var result = _fileViewModel.Load(bookmark);
+            ParseResult(result);
 
-        /// <summary>
-        /// Load archive(s) and display first page
-        /// </summary>
-        /// <param name="files">Array with archive locations</param>
-        public void LoadFile(string[] files) => LoadFile(files, 0, 0);
+            Mouse.OverrideCursor = Cursors.Arrow;
+        }
 
         /// <summary>
         /// Load the archives
@@ -1265,21 +1271,18 @@ namespace CSharpComicViewer.WPF
         /// <param name="files">Archive location</param>
         /// <param name="fileNumber">File in array to start at</param>
         /// <param name="pageNumber">Page on which to start from selected file</param>
-        public void LoadFile(string[] files, int fileNumber, int pageNumber)
+        public void LoadFile(Session session)
         {
-            foreach (string file in files)
-            {
-                if (!System.IO.File.Exists(file) && !Directory.Exists(file))
-                {
-                    ShowMessage("One or more archives not found");
-                    return;
-                }
-            }
-            
             Mouse.OverrideCursor = Cursors.Wait;
 
-            var result = _fileViewModel.Load(new Session(files, fileNumber, pageNumber));
+            var result = _fileViewModel.Load(session);
+            ParseResult(result);
+            
+            Mouse.OverrideCursor = Cursors.Arrow;
+        }
 
+        public void ParseResult(LoadResult result)
+        {
             if (result.HasFile)
             {
                 foreach (var info in _fileViewModel.GetAllInfo())
@@ -1304,9 +1307,8 @@ namespace CSharpComicViewer.WPF
             {
                 ShowMessage("No supported files found.");
             }
-
-            Mouse.OverrideCursor = Cursors.Arrow;
         }
+
 
         /// <summary>
         /// Toggle the images options (fit to screen etc.)
@@ -1341,7 +1343,7 @@ namespace CSharpComicViewer.WPF
 
                 if (image == null)
                 {
-                    Session loadNext = _fileViewModel.GetOutOfRangeNextSession();
+                    var loadNext = _fileViewModel.GetOutOfRangeNextSession();
                     if (loadNext != null) LoadFile(loadNext);
                 }
                 else
@@ -1363,7 +1365,7 @@ namespace CSharpComicViewer.WPF
 
                 if (image == null)
                 {
-                    Session loadPrevious = _fileViewModel.GetOutOfRangePreviousSession();
+                    var loadPrevious = _fileViewModel.GetOutOfRangePreviousSession();
                     if (loadPrevious != null) LoadFile(loadPrevious);
                 }
                 else

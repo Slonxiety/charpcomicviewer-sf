@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpComicViewer.Configuration
+namespace CSharpComicLoader
 {
     /// <summary>
 	/// Mode of default handling when showing an image.

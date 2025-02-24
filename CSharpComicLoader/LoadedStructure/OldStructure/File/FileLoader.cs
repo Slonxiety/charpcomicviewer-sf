@@ -19,9 +19,8 @@
 
 using System;
 using System.Collections;
-using CSharpComicLoader.File;
 
-namespace CSharpComicViewer
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// Implementation of the IFileLoader.

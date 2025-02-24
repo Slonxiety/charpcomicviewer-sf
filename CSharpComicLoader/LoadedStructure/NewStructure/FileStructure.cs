@@ -1,5 +1,4 @@
-﻿using CSharpComicLoader.File;
-using SevenZip;
+﻿using SevenZip;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpComicLoader.Comic
+using CSharpComicLoader.OldFileStructure;
+
+namespace CSharpComicLoader.NewFileStructure
 {
     public class FileStructure
     {

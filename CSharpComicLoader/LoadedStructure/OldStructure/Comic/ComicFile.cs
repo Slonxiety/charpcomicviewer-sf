@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CSharpComicLoader.Comic
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// A comic file object. This corresponds to an actual file, either an archive or an image.

@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CSharpComicLoader.File
+namespace CSharpComicLoader
 {
 	/// <summary>
 	/// Contains supported image extensions.

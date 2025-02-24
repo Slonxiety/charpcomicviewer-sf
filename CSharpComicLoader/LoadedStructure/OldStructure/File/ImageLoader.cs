@@ -21,9 +21,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using CSharpComicLoader.Comic;
 
-namespace CSharpComicLoader.File
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// Class used to load loose images.
@@ -57,7 +56,7 @@ namespace CSharpComicLoader.File
 			LoadedFiles = 0;
 			LoadedFilesData returnValue = new LoadedFilesData();
 			returnValue.ComicBook = new ComicBook();
-			Comic.ComicFile comicFile = new Comic.ComicFile();
+			ComicFile comicFile = new ComicFile();
 
 			Array.Sort(files);
 			FileStream fs;

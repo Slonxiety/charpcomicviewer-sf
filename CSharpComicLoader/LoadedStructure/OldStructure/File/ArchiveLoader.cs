@@ -22,10 +22,8 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using SevenZip;
-using CSharpComicLoader.Comic;
-using CSharpComicLoader.File;
 
-namespace CSharpComicLoader.File
+namespace CSharpComicLoader.OldFileStructure
 {
 	/// <summary>
 	/// Class used to load archives.
@@ -82,7 +80,7 @@ namespace CSharpComicLoader.File
 			LoadedFiles = 0;
 			LoadedFilesData returnValue = new LoadedFilesData();
 			returnValue.ComicBook = new ComicBook();
-			Comic.ComicFile comicFile = new Comic.ComicFile();
+			ComicFile comicFile = new ComicFile();
 
 			Array.Sort(files);
 
