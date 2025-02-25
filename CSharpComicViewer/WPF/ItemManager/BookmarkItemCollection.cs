@@ -8,10 +8,21 @@ using CSharpComicLoader.OldFileStructure;
 
 namespace CSharpComicViewer.WPF.ItemManager
 {
+    /// <summary>
+    /// Implementation of <see cref="AbstractItemCollection{T}"/>, used to manage items of <see cref="Bookmark"/>
+    /// </summary>
     public class BookmarkItemCollection : AbstractItemCollection<Bookmark>
     {
+        /// <summary>
+        /// Initiates an instance of BookmarkItemCollection.
+        /// </summary>
+        /// <param name="bookmarks"></param>
         public BookmarkItemCollection(List<Bookmark> bookmarks) : base(bookmarks) { }
 
+        /// <summary>
+        /// The list of propertybinds of <see cref="Bookmark"/>
+        /// </summary>
+        /// <returns></returns>
         public override IEnumerable<PropertyBind> GetPropertyBinds()
         {
             return new List<PropertyBind>()

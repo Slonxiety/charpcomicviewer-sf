@@ -344,7 +344,7 @@ namespace CSharpComicViewer.WPF
                     Configuration = new Configuration.Configuration();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Configuration = new Configuration.Configuration();
             }
@@ -373,7 +373,7 @@ namespace CSharpComicViewer.WPF
                 myWriter.Close();
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -1254,7 +1254,10 @@ namespace CSharpComicViewer.WPF
             LoadFile(session);
         }
 
-
+        /// <summary>
+        /// Load archive from a bookmark
+        /// </summary>
+        /// <param name="bookmark"></param>
         public void LoadFile(Bookmark bookmark)
         {
             Mouse.OverrideCursor = Cursors.Wait;
@@ -1266,11 +1269,9 @@ namespace CSharpComicViewer.WPF
         }
 
         /// <summary>
-        /// Load the archives
+        /// Load archive from a session
         /// </summary>
-        /// <param name="files">Archive location</param>
-        /// <param name="fileNumber">File in array to start at</param>
-        /// <param name="pageNumber">Page on which to start from selected file</param>
+        /// <param name="session"></param>
         public void LoadFile(Session session)
         {
             Mouse.OverrideCursor = Cursors.Wait;
@@ -1281,6 +1282,10 @@ namespace CSharpComicViewer.WPF
             Mouse.OverrideCursor = Cursors.Arrow;
         }
 
+        /// <summary>
+        /// Parse a LoadResult and show error or image.
+        /// </summary>
+        /// <param name="result">result after load</param>
         public void ParseResult(LoadResult result)
         {
             if (result.HasFile)
