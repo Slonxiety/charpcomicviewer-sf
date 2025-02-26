@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace CSharpComicLoader.OldFileStructure
 {
@@ -64,7 +65,11 @@ namespace CSharpComicLoader.OldFileStructure
         public Session GetSession() => _comicBook.GetSession();
         public Bookmark GetBookmark() => _comicBook.GetBookmark();
 
-        public byte[] GetImage() => _imageCache;
+        public BitmapImage GetImage()
+        {
+            if (_imageCache == null) return null;
+            return ImageUtils.ConverToBitmapImage(_imageCache);
+        }
 
         //public void PointTo(int FileNumber, int PageNumber) => _imageCache = _comicBook.GetPage(FileNumber, PageNumber);
 
@@ -72,10 +77,15 @@ namespace CSharpComicLoader.OldFileStructure
         public void PointToBegin() => _imageCache = _comicBook.GetPage(0);
         public void PointToLast() => _imageCache = _comicBook.GetPage(_comicBook.CurrentFile.TotalPages - 1);
         public void PointToEnd() => _imageCache = _comicBook.GetPage(_comicBook.TotalFiles - 1, _comicBook[_comicBook.TotalFiles - 1].TotalPages - 1);
-        public void PointToNextPage() => _imageCache = _comicBook.NextPage();
-        public void PointToNextFile() => _imageCache = _comicBook.NextFile();
-        public void PointToPreviousPage() => _imageCache = _comicBook.PreviousPage();
-        public void PointToPreviousFile() => _imageCache = _comicBook.PreviousFile();
+        public void PointToNextPage() => _imageCache = _comicBook.NextPage() ?? _imageCache;
+        public void PointToNextFile() => _imageCache = _comicBook.NextFile() ?? _imageCache;
+        public void PointToPreviousPage() => _imageCache = _comicBook.PreviousPage() ?? _imageCache;
+        public void PointToPreviousFile() => _imageCache = _comicBook.PreviousFile() ?? _imageCache;
+
+        public bool IsFirstPage() => _comicBook.CurrentPageNumber == 1;
+        public bool IsLastPage() => _comicBook.CurrentPageNumber == _comicBook.TotalPages;
+        public bool IsFirstFile() => _comicBook.CurrentFileNumber == 1;
+        public bool IsLastFile() => _comicBook.CurrentFileNumber == _comicBook.TotalFiles;
 
 
         public Session GetOutOfRangeNextSession()

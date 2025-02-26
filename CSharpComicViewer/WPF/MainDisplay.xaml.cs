@@ -30,6 +30,7 @@ using Microsoft.Win32;
 
 using CSharpComicLoader;
 using CSharpComicLoader.OldFileStructure;
+using System.Windows.Media;
 
 namespace CSharpComicViewer.WPF
 {
@@ -591,7 +592,7 @@ namespace CSharpComicViewer.WPF
                 if (e.Key == Key.End && !Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))  _fileViewModel.PointToEnd();
                 if (e.Key == Key.End && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))   _fileViewModel.PointToLast();
 
-                byte[] image = _fileViewModel.GetImage();
+                var image = _fileViewModel.GetImage();
                 if (image != null)
                 {
                     DisplayImage(image, ImageStartPosition.Top);
@@ -1084,9 +1085,9 @@ namespace CSharpComicViewer.WPF
         /// <summary>
         /// Displays the image.
         /// </summary>
-        /// <param name="imageAsBytes">The image as bytes.</param>
+        /// <param name="bitmapSource">The image source.</param>
         /// <param name="scrollTo">The scroll to.</param>
-        public void DisplayImage(byte[] imageAsBytes, ImageStartPosition scrollTo)
+        public void DisplayImage(BitmapSource bitmapSource, ImageStartPosition scrollTo)
         {
             // If page information is displayed update it with new information
             if (PageInfoBox.Visibility == System.Windows.Visibility.Visible)
@@ -1116,28 +1117,19 @@ namespace CSharpComicViewer.WPF
                     }
             }
 
-            System.Drawing.Image image = ImageUtils.ConvertToImage(imageAsBytes);
 
-            BitmapImage bitmapimage;
-
-            if (Configuration.ImageMode == ImageMode.Normal)
+            if (Configuration.ImageMode != ImageMode.Normal)
             {
-                bitmapimage = ImageUtils.ConverToBitmapImage(imageAsBytes);
-            }
-            else
-            {
-                var resize_image = ImageUtils.GetResizeImage(image,
-                        new System.Drawing.SizeF((float)ScrollField.ViewportWidth, (float)ScrollField.ViewportHeight),
+                bitmapSource = ImageUtils.ResizeImage(bitmapSource,
+                        new Size(ScrollField.ViewportWidth, ScrollField.ViewportHeight),
                         Configuration.ImageMode);
-
-                bitmapimage = ImageUtils.ConverToBitmapImage(resize_image);
             }
 
-            this.Background = ImageUtils.GetBackgroundColor(image);
+            this.Background = ImageUtils.GetBackgroundColor(bitmapSource);
 
-            DisplayedImage.Source = bitmapimage;
-            DisplayedImage.Width = bitmapimage.PixelWidth;
-            DisplayedImage.Height = bitmapimage.PixelHeight;
+            DisplayedImage.Source = bitmapSource;
+            DisplayedImage.Width = bitmapSource.Width;
+            DisplayedImage.Height = bitmapSource.Height;
 
             if (DisplayedImage.Width < ScrollField.ViewportWidth)
             {
@@ -1159,53 +1151,6 @@ namespace CSharpComicViewer.WPF
 
             ShowPageInformation();
         }
-
-        /// <summary>
-        /// Gets the image.
-        /// </summary>
-        /// <param name="imageAsByteArray">The image as byte array.</param>
-        /// <returns>
-        /// Returns an image.
-        /// </returns>
-        private BitmapImage GetImage(byte[] imageAsByteArray)
-        {
-            BitmapImage bi = new BitmapImage();
-
-            try
-            {
-                bi.CacheOption = BitmapCacheOption.OnLoad;
-                MemoryStream ms = new MemoryStream(imageAsByteArray);
-                ms.Position = 0;
-                bi.BeginInit();
-                bi.StreamSource = ms;
-                bi.EndInit();
-            }
-            catch
-            {
-                try
-                {
-                    //If it fails the normal way try it again with a convert, possible quality loss.
-                    System.Drawing.ImageConverter ic = new System.Drawing.ImageConverter();
-                    System.Drawing.Image img = (System.Drawing.Image)ic.ConvertFrom(imageAsByteArray);
-                    System.Drawing.Bitmap bitmap1 = new System.Drawing.Bitmap(img);
-                    MemoryStream ms = new MemoryStream();
-                    bitmap1.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-                    ms.Position = 0;
-                    bi = new BitmapImage();
-                    bi.CacheOption = BitmapCacheOption.OnLoad;
-                    bi.BeginInit();
-                    bi.StreamSource = ms;
-                    bi.EndInit();
-                }
-                catch
-                {
-                    ShowMessage("Could not load image.");
-                }
-            }
-
-            return bi;
-        }
-
 
 
         /// <summary>
@@ -1343,16 +1288,16 @@ namespace CSharpComicViewer.WPF
         {
             if (_fileViewModel.IsFileLoaded())
             {
-                _fileViewModel.PointToNextFile();
-                byte[] image = _fileViewModel.GetImage();
-
-                if (image == null)
+                if (_fileViewModel.IsLastFile())
                 {
                     var loadNext = _fileViewModel.GetOutOfRangeNextSession();
                     if (loadNext != null) LoadFile(loadNext);
                 }
                 else
                 {
+                    _fileViewModel.PointToNextFile();
+                    var image = _fileViewModel.GetImage();
+
                     DisplayImage(image, ImageStartPosition.Top);
                 }
             }
@@ -1365,16 +1310,16 @@ namespace CSharpComicViewer.WPF
         {
             if (_fileViewModel.IsFileLoaded())
             {
-                _fileViewModel.PointToPreviousFile();
-                byte[] image = _fileViewModel.GetImage();
-
-                if (image == null)
+                if (_fileViewModel.IsFirstFile())
                 {
                     var loadPrevious = _fileViewModel.GetOutOfRangePreviousSession();
                     if (loadPrevious != null) LoadFile(loadPrevious);
                 }
                 else
                 {
+                    _fileViewModel.PointToPreviousFile();
+                    var image = _fileViewModel.GetImage();
+
                     DisplayImage(image, ImageStartPosition.Bottom);
                 }
             }
@@ -1387,8 +1332,11 @@ namespace CSharpComicViewer.WPF
         {
             if (_fileViewModel.IsFileLoaded())
             {
+                if (_fileViewModel.IsLastFile() && _fileViewModel.IsLastPage())
+                    return;
+
                 _fileViewModel.PointToNextPage();
-                byte[] image = _fileViewModel.GetImage();
+                var image = _fileViewModel.GetImage();
                 if (image != null)
                 {
                     DisplayImage(image, ImageStartPosition.Top);
@@ -1404,8 +1352,11 @@ namespace CSharpComicViewer.WPF
         {
             if (_fileViewModel.IsFileLoaded())
             {
+                if (_fileViewModel.IsFirstFile() && _fileViewModel.IsFirstPage())
+                    return;
+
                 _fileViewModel.PointToPreviousPage();
-                byte[] image = _fileViewModel.GetImage();
+                var image = _fileViewModel.GetImage();
                 if (image != null)
                 {
                     DisplayImage(image, ImageStartPosition.Bottom);

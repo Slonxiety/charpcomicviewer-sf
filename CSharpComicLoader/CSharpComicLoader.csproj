@@ -50,6 +50,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LoadedStructure\NewStructure\Bookmark.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Session.cs" />
     <Compile Include="LoadedStructure\OldStructure\Bookmark.cs" />
     <Compile Include="LoadedStructure\OldStructure\Comic\ComicBook.cs" />
     <Compile Include="LoadedStructure\OldStructure\Comic\ComicFile.cs" />
