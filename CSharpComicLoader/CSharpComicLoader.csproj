@@ -50,8 +50,13 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LoadedStructure\NewStructure\Bookmark.cs" />
-    <Compile Include="LoadedStructure\NewStructure\Session.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Collection\CollectionData.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Page\PageData.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Page\Bookmark.cs" />
+    <Compile Include="LoadedStructure\NewStructure\FileViewModel.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Structure\SessionToken.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Structure\StructureData.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Structure\Session.cs" />
     <Compile Include="LoadedStructure\OldStructure\Bookmark.cs" />
     <Compile Include="LoadedStructure\OldStructure\Comic\ComicBook.cs" />
     <Compile Include="LoadedStructure\OldStructure\Comic\ComicFile.cs" />
@@ -59,13 +64,12 @@
     <Compile Include="LoadedStructure\InfoData.cs" />
     <Compile Include="LoadedStructure\LoadResult.cs" />
     <Compile Include="LoadedStructure\OldStructure\Session.cs" />
-    <Compile Include="LoadedStructure\NewStructure\FileCollection.cs" />
-    <Compile Include="LoadedStructure\NewStructure\FileStructure.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Structure\FileStructure.cs" />
     <Compile Include="LoadedStructure\OldStructure\File\FileLoader.cs" />
     <Compile Include="LoadedStructure\OldStructure\FileViewModel.cs" />
     <Compile Include="LoadedStructure\OldStructure\File\ArchiveLoader.cs" />
     <Compile Include="LoadedStructure\OldStructure\File\FileNextPrevious.cs" />
-    <Compile Include="LoadedStructure\NewStructure\ImageFile.cs" />
+    <Compile Include="LoadedStructure\NewStructure\Page\Page.cs" />
     <Compile Include="LoadedStructure\OldStructure\File\ImageLoader.cs" />
     <Compile Include="LoadedStructure\OldStructure\File\LoadedFilesData.cs" />
     <Compile Include="File\SupportedExtensions.cs" />

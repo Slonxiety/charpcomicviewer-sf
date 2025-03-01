@@ -9,13 +9,14 @@ using System.Windows.Media.Imaging;
 
 namespace CSharpComicLoader.OldFileStructure
 {
+
     public class FileViewModel : IFileViewModel
     {
         private FileLoader _fileLoader = new FileLoader();
         private FileNextPrevious _fileNextPrevious = new FileNextPrevious();
         private ComicBook _comicBook;
         private byte[] _imageCache;
-        
+
         public LoadResult Load(Session session)
         {
             foreach (string file in session.Files)
@@ -47,13 +48,13 @@ namespace CSharpComicLoader.OldFileStructure
 
             if (_fileLoader.PageType == PageType.Archive)
             {
-                ret = "Archive " + _comicBook.CurrentFileNumber + "/" + _comicBook.TotalFiles + 
-                        "\r\nArchive name: " + _comicBook.CurrentFile.FileName + 
+                ret = "Archive " + _comicBook.CurrentFileNumber + "/" + _comicBook.TotalFiles +
+                        "\r\nArchive name: " + _comicBook.CurrentFile.FileName +
                         "\r\nPage: " + _comicBook.CurrentPageNumber + "/" + _comicBook.TotalPages;
             }
             else
             {
-                ret = "File name: " + _comicBook.CurrentFile.FileName + 
+                ret = "File name: " + _comicBook.CurrentFile.FileName +
                         "\r\nPage: " + _comicBook.CurrentPageNumber + "/" + _comicBook.TotalPages;
             }
 

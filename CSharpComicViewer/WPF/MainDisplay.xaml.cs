@@ -1081,7 +1081,7 @@ namespace CSharpComicViewer.WPF
         }
         #endregion
 
-        #region Load an Display
+        #region Load and Display
         /// <summary>
         /// Displays the image.
         /// </summary>

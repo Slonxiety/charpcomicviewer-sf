@@ -28,12 +28,34 @@ namespace CSharpComicLoader
 	/// </summary>
 	public static class Utils
 	{
-		/// <summary>
-		/// Validates the archive file extension.
-		/// </summary>
-		/// <param name="FilePath">The file path.</param>
-		/// <returns></returns>
-		public static bool ValidateArchiveFileExtension(string FilePath)
+        public static string[] archiveExt = Enum.GetNames(typeof(SupportedArchives));
+        public static string[] imageExt = Enum.GetNames(typeof(SupportedImages));
+        public static string[] textExt = Enum.GetNames(typeof(SupportedTextFiles));
+
+        public static FileType GetFileType(string filepath)
+        {
+            foreach (string ext in archiveExt)
+                if (filepath.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase))
+                    return FileType.Archive;
+
+            foreach (string ext in imageExt)
+                if (filepath.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase))
+                    return FileType.Image;
+
+            foreach (string ext in textExt)
+                if (filepath.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase))
+                    return FileType.Text;
+
+            return FileType.Unknown;
+        }
+
+
+        /// <summary>
+        /// Validates the archive file extension.
+        /// </summary>
+        /// <param name="FilePath">The file path.</param>
+        /// <returns></returns>
+        public static bool ValidateArchiveFileExtension(string FilePath)
 		{
 			bool returnValue = false;
 

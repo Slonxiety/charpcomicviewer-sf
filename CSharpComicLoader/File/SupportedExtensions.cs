@@ -23,6 +23,14 @@ using System.Text;
 
 namespace CSharpComicLoader
 {
+	public enum FileType
+	{
+		Archive,
+		Image,
+		Text,
+		Unknown
+	}
+
 	/// <summary>
 	/// Contains supported image extensions.
 	/// </summary>
